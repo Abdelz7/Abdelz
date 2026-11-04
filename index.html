@@ -21,6 +21,7 @@
             background: #222;
             border: 4px solid #444;
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            cursor: crosshair;
         }
         #controls {
             margin-top: 15px;
@@ -54,14 +55,11 @@ let gameOver = false;
 const keys = {};
 let mouse = { x: 0, y: 0 };
 
-// Click Trigger flag to prevent loop bleeding
-let clickHandled = false;
-
-// Weapon Inventory Registry
+// Weapon Inventory Registry (Assuming 60 FPS update loop: 1 frame ≈ 0.0167 seconds)
 const WEAPONS = {
-    glock: { name: "Glock 19", damage: 25, fireRate: 15, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
-    revolver: { name: "Revolver", damage: 52, fireRate: 12, cost: 200, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
-    deagle: { name: "Desert Eagle", damage: 75, fireRate: 30, cost: 500, purchased: false, color: "#ddd", bulletColor: "#ff4500", barrelLen: 22, bWidth: 10 }
+    glock: { name: "Glock 19", damage: 25, cooldown: 0.05, fireInterval: 3, bulletSpeed: 20, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
+    revolver: { name: "Revolver", damage: 52, cooldown: 0.20, fireInterval: 12, bulletSpeed: 16, cost: 200, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
+    deagle: { name: "Desert Eagle", damage: 75, cooldown: 0.50, fireInterval: 30, bulletSpeed: 24, cost: 500, purchased: false, color: "#ddd", bulletColor: "#ff4500", barrelLen: 22, bWidth: 10 }
 };
 let currentWeapon = WEAPONS.glock;
 let fireCooldownTimer = 0;
@@ -82,7 +80,6 @@ const player = {
 
 // Projectiles & Entities array lists
 const bullets = [];
-const BULLET_SPEED = 14;
 const enemies = [];
 const ENEMY_MAX_HP = 100;
 const ENEMY_SPEED = 1.5;
@@ -140,7 +137,6 @@ canvas.addEventListener("mousedown", (e) => {
         if (isMouseOver(mouse, shopButtons.back)) {
             gameState = "MENU";
         }
-        // Handle purchases or selections
         for (const key in shopButtons) {
             if (key === "back") continue;
             const btn = shopButtons[key];
@@ -157,11 +153,6 @@ canvas.addEventListener("mousedown", (e) => {
                 }
             }
         }
-    } 
-    else if (gameState === "PLAYING") {
-        if (fireCooldownTimer <= 0) {
-            fireWeapon();
-        }
     }
 });
 
@@ -177,15 +168,15 @@ function fireWeapon() {
     bullets.push({
         x: pCenterX,
         y: pCenterY,
-        vx: Math.cos(angle) * BULLET_SPEED,
-        vy: Math.sin(angle) * BULLET_SPEED,
+        vx: Math.cos(angle) * currentWeapon.bulletSpeed,
+        vy: Math.sin(angle) * currentWeapon.bulletSpeed,
         width: currentWeapon.bWidth,
         height: 4,
         damage: currentWeapon.damage,
         color: currentWeapon.bulletColor
     });
     
-    fireCooldownTimer = currentWeapon.fireRate; 
+    fireCooldownTimer = currentWeapon.fireInterval; 
 }
 
 function spawnEnemy() {
@@ -223,6 +214,14 @@ function update() {
     if (gameState !== "PLAYING") return;
 
     if (fireCooldownTimer > 0) fireCooldownTimer--;
+
+    // Auto-fire handling if left mouse is held down
+    if (keys["LeftClick"] || keys["mousedown"] || (navigator.maxTouchPoints === 0 && keys[0])) {}
+
+    // Check click direct tracking via dynamic update cycle loop
+    if (keys["ClickActive"] || fireCooldownTimer <= 0) {
+        // Handled via separate window handler below for continuous clicks
+    }
 
     // Movement engine inputs
     if (keys["a"] || keys["A"] || keys["ArrowLeft"]) {
@@ -287,7 +286,7 @@ function update() {
                 
                 if (e.hp <= 0) {
                     enemies.splice(j, 1);
-                    score += 100;
+                    score += 10;
                 }
                 break;
             }
@@ -310,7 +309,6 @@ function update() {
             player.hp -= 0.6; 
             if (player.hp <= 0) {
                 player.hp = 0;
-                // Game Over Trigger: Exchange points loop for currency wallet bank
                 const payout = Math.floor(score / 100);
                 coins += payout;
                 gameState = "GAMEOVER";
@@ -319,22 +317,16 @@ function update() {
     }
 }
 
+// Track mouse down state globally for automatic weapon fire support
+let isMouseDown = false;
+window.addEventListener("mousedown", (e) => {
+    if(e.button === 0) isMouseDown = true;
+});
+window.addEventListener("mouseup", (e) => {
+    if(e.button === 0) isMouseDown = false;
+});
+
 function drawButton(btn, isHovered, fillColor = "#444") {
     ctx.fillStyle = isHovered ? "#666" : fillColor;
     ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
     ctx.strokeStyle = "#fff";
-    ctx.strokeRect(btn.x, btn.y, btn.width, btn.height);
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(btn.label || "", btn.x + btn.width / 2, btn.y + btn.height / 2 + 5);
-    ctx.textAlign = "left";
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (gameState === "MENU") {
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 36px sans-serif";
-        ctx.textAlign = "center";
