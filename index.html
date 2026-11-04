@@ -1,10 +1,303 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Abdelz</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glock 19 Platformer</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        canvas {
+            background: #222;
+            border: 4px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #controls {
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+            color: #aaa;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <p>Welcome to Abdelz Pages website.</p>
+
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div id="controls">
+        <strong>Controls:</strong> A / D or Left/Right Arrow = Move | W, Space, or Up Arrow = Jump | Left Click = Fire Glock 19 (25 Damage)
+    </div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Game Constants & State
+const GRAVITY = 0.5;
+let score = 0;
+let gameOver = false;
+
+// Input tracking
+const keys = {};
+let mouse = { x: 0, y: 0 };
+
+// Player Object
+const player = {
+    x: 100,
+    y: 300,
+    width: 24,
+    height: 40,
+    vx: 0,
+    vy: 0,
+    speed: 4,
+    jumpForce: 11,
+    grounded: false,
+    facingRight: true,
+    hp: 100
+};
+
+// Weapons Systems
+const bullets = [];
+const BULLET_SPEED = 12;
+const GLOCK_DAMAGE = 25;
+
+// NPC Settings
+const enemies = [];
+const ENEMY_MAX_HP = 100;
+const ENEMY_SPEED = 2;
+let spawnTimer = 0;
+const SPAWN_INTERVAL = 120; // Frames between spawns (~2 seconds)
+
+// Level Design (Platforms)
+const platforms = [
+    { x: 0, y: 460, width: 800, height: 40 },   // Ground
+    { x: 150, y: 340, width: 160, height: 20 },  // Mid Left
+    { x: 480, y: 340, width: 160, height: 20 },  // Mid Right
+    { x: 300, y: 220, width: 200, height: 20 }   // Top Center
+];
+
+// Event Listeners
+window.addEventListener("keydown", (e) => keys[e.code] = true);
+window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+});
+
+canvas.addEventListener("mousedown", (e) => {
+    if (gameOver) {
+        resetGame();
+        return;
+    }
+    if (e.button === 0) { // Left Click
+        fireGlock();
+    }
+});
+
+function fireGlock() {
+    // Fire toward mouse position relative to player center
+    const pCenterX = player.x + player.width / 2;
+    const pCenterY = player.y + player.height / 2;
+    const angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
+
+    bullets.push({
+        x: pCenterX,
+        y: pCenterY,
+        vx: Math.cos(angle) * BULLET_SPEED,
+        vy: Math.sin(angle) * BULLET_SPEED,
+        radius: 3
+    });
+}
+
+function spawnEnemy() {
+    // Alternates spawning on left or right edge of screen
+    const fromRight = Math.random() > 0.5;
+    enemies.push({
+        x: fromRight ? canvas.width + 20 : -40,
+        y: 0, // Falls onto the stage
+        width: 24,
+        height: 40,
+        vx: 0,
+        vy: 0,
+        hp: ENEMY_MAX_HP,
+        grounded: false
+    });
+}
+
+function resetGame() {
+    player.x = 100;
+    player.y = 300;
+    player.vx = 0;
+    player.vy = 0;
+    player.hp = 100;
+    enemies.length = 0;
+    bullets.length = 0;
+    score = 0;
+    gameOver = false;
+}
+
+// Simple AABB Collision Detection
+function checkCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
+}
+
+// Handle physics and platform collisions
+function applyPhysics(entity) {
+    entity.vy += GRAVITY;
+    entity.x += entity.vx;
+    entity.y += entity.vy;
+    entity.grounded = false;
+
+    for (let plat of platforms) {
+        // Resolve vertical collisions
+        if (entity.x + entity.width > plat.x && entity.x = plat.y && entity.y + entity.height - entity.vy  canvas.width) player.x = canvas.width - player.width;
+
+    // --- Spawning System ---
+    spawnTimer++;
+    if (spawnTimer >= SPAWN_INTERVAL) {
+        spawnEnemy();
+        spawnTimer = 0;
+    }
+
+    // --- Process Bullets ---
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+
+        // Remove offscreen bullets
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+            bullets.splice(i, 1);
+            continue;
+        }
+
+        // Bullet hitting enemies
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            let e = enemies[j];
+            if (b.x > e.x && b.x < e.x + e.width && b.y > e.y && b.y < e.y + e.height) {
+                e.hp -= GLOCK_DAMAGE;
+                bullets.splice(i, 1); // Destroy bullet
+
+                if (e.hp <= 0) {
+                    enemies.splice(j, 1);
+                    score += 100;
+                }
+                break;
+            }
+        }
+    }
+
+    // --- Process AI Aggro/NPCs ---
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+
+        // Core Requirement: Run to player coordinates
+        if (e.x < player.x) {
+            e.vx = ENEMY_SPEED;
+        } else if (e.x > player.x) {
+            e.vx = -ENEMY_SPEED;
+        } else {
+            e.vx = 0;
+        }
+
+        applyPhysics(e);
+
+        // Deal damage on touch
+        if (checkCollision(player, e)) {
+            player.hp -= 1; // Chip damage over time
+            if (player.hp <= 0) {
+                gameOver = true;
+            }
+        }
+    }
+}
+
+function draw() {
+    // Clear screen
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Platforms
+    ctx.fillStyle = "#555";
+    for (let plat of platforms) {
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+    }
+
+    // Draw Player
+    ctx.fillStyle = "#3498db";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Draw Glock 19 pointing at mouse
+    ctx.save();
+    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+    let angle = Math.atan2(mouse.y - (player.y + player.height / 2), mouse.x - (player.x + player.width / 2));
+    ctx.rotate(angle);
+    ctx.fillStyle = "#111"; // Gun body tint
+    ctx.fillRect(5, -3, 14, 6); // Barrel/Slide
+    ctx.fillRect(5, 0, 4, 10);  // Grip
+    ctx.restore();
+
+    // Draw Bullets
+    ctx.fillStyle = "#f1c40f";
+    for (let b of bullets) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Draw Running NPCs & HP bars
+    for (let e of enemies) {
+        ctx.fillStyle = "#e74c3c";
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+
+        // 100 HP dynamic bar tracker
+        ctx.fillStyle = "#000";
+        ctx.fillRect(e.x - 5, e.y - 10, e.width + 10, 5);
+        ctx.fillStyle = "#2ecc71";
+        ctx.fillRect(e.x - 5, e.y - 10, (e.width + 10) * (e.hp / ENEMY_MAX_HP), 5);
+    }
+
+    // UI Overlay
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px sans-serif";
+    ctx.fillText(`Score: ${score}`, 20, 35);
+    ctx.fillText(`Player HP: ${Math.max(0, Math.ceil(player.hp))}%`, 20, 65);
+
+    if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "40px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = "20px sans-serif";
+        ctx.fillText("Click anywhere to respawn", canvas.width / 2, canvas.height / 2 + 20);
+        ctx.textAlign = "left";
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// Kick off game loop
+loop();
+</script>
 </body>
 </html>
