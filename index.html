@@ -1,125 +1,131 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glock 19 & Weapon Shop Platformer</title>
-    <style>
-        body {
-            margin: 0;
-            background: #111;
-            color: #fff;
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        canvas {
-            background: #222;
-            border: 4px solid #444;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            cursor: crosshair;
-        }
-        #controls {
-            margin-top: 15px;
-            font-size: 14px;
-            text-align: center;
-            color: #aaa;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glock 19 & Weapon Shop Platformer</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      background: #222;
+      border: 4px solid #444;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+      cursor: crosshair;
+    }
+    #controls {
+      margin-top: 15px;
+      font-size: 14px;
+      text-align: center;
+      color: #aaa;
+    }
+  </style>
 </head>
 <body>
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+  <div id="controls">
+    <strong>Controls:</strong> A / D or Left/Right Arrow = Move | W, Space, or Up Arrow = Jump | Left Click = Shoot | R = Return to Menu | B = Weapon Shop
+  </div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
-    <div id="controls">
-        <strong>Controls:</strong> A / D or Left/Right Arrow = Move | W, Space, or Up Arrow = Jump | Left Click = Shoot | R = Return to Menu | B = Weapon Shop
-    </div>
+    // Game States: "MENU", "SHOP", "PLAYING"
+    let gameState = "MENU";
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+    // Global Ecosystem Metrics
+    const GRAVITY = 0.5;
+    let score = 0;
+    let coins = 100;
 
-// Game States: "MENU", "SHOP", "PLAYING"
-let gameState = "MENU";
+    // Input management
+    const keys = {};
+    let mouse = { x: 0, y: 0, clicked: false };
 
-// Global Ecosystem Metrics
-const GRAVITY = 0.5;
-let score = 0;
-let coins = 100; 
+    // Weapon Inventory Registry
+    const WEAPONS = {
+      glock: { name: "Glock 19", damage: 25, fireInterval: 15, bulletSpeed: 20, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
+      revolver: { name: "Revolver", damage: 52, fireInterval: 35, bulletSpeed: 16, cost: 80, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
+      deagle: { name: "Desert Eagle", damage: 75, fireInterval: 50, bulletSpeed: 24, cost: 200, purchased: false, color: "#aaa", bulletColor: "#ff3300", barrelLen: 22, bWidth: 9 }
+    };
 
-// Input management
-const keys = {};
-let mouse = { x: 0, y: 0, clicked: false };
+    let currentWeapon = "glock";
+    let fireCooldown = 0;
 
-// Weapon Inventory Registry 
-const WEAPONS = {
-    glock: { name: "Glock 19", damage: 25, fireInterval: 15, bulletSpeed: 20, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
-    revolver: { name: "Revolver", damage: 52, fireInterval: 35, bulletSpeed: 16, cost: 80, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
-    deagle: { name: "Desert Eagle", damage: 75, fireInterval: 50, bulletSpeed: 24, cost: 200, purchased: false, color: "#aaa", bulletColor: "#ff3300", barrelLen: 22, bWidth: 9 }
-};
-let currentWeapon = "glock";
-let fireCooldown = 0;
+    // Player Entity
+    const player = {
+      x: 100,
+      y: 300,
+      width: 30,
+      height: 40,
+      vx: 0,
+      vy: 0,
+      speed: 5,
+      jumpForce: 11,
+      grounded: false
+    };
 
-// Player Entity
-const player = {
-    x: 100,
-    y: 300,
-    width: 30,
-    height: 40,
-    vx: 0,
-    vy: 0,
-    speed: 5,
-    jumpForce: 11,
-    grounded: false
-};
+    // Map Environment Geometry
+    const platforms = [
+      { x: 0, y: 450, width: 800, height: 50 },
+      { x: 150, y: 330, width: 150, height: 20 },
+      { x: 450, y: 330, width: 150, height: 20 },
+      { x: 300, y: 220, width: 200, height: 20 }
+    ];
 
-// Map Environment Geometry
-const platforms = [
-    { x: 0, y: 450, width: 800, height: 50 },
-    { x: 150, y: 330, width: 150, height: 20 },
-    { x: 450, y: 330, width: 150, height: 20 },
-    { x: 300, y: 220, width: 200, height: 20 }
-];
+    // Dynamic Pools
+    let bullets = [];
+    let targets = [];
 
-// Dynamic Pools
-let bullets = [];
-let targets = [];
+    // Shop Menu Layout Configuration
+    const shopItems = [
+      { id: "glock", x: 100, y: 200, w: 180, h: 120 },
+      { id: "revolver", x: 310, y: 200, w: 180, h: 120 },
+      { id: "deagle", x: 520, y: 200, w: 180, h: 120 }
+    ];
 
-// Shop Menu Layout Configuration
-const shopItems = [
-    { id: "glock", x: 100, y: 200, w: 180, h: 120 },
-    { id: "revolver", x: 310, y: 200, w: 180, h: 120 },
-    { id: "deagle", x: 520, y: 200, w: 180, h: 120 }
-];
-
-// Event Listeners
-window.addEventListener("keydown", (e) => {
-    keys[e.key.toLowerCase()] = true;
-    if (e.key.toLowerCase() === 'r') gameState = "MENU";
-    if (e.key.toLowerCase() === 'b') {
+    // Event Listeners
+    window.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.key.toLowerCase() === 'r') gameState = "MENU";
+      if (e.key.toLowerCase() === 'b') {
         if (gameState === "PLAYING") gameState = "SHOP";
         else if (gameState === "SHOP") gameState = "PLAYING";
-    }
-});
-window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+      }
+    });
 
-canvas.addEventListener("mousemove", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = e.clientX - rect.left;
-    mouse.y = e.clientY - rect.top;
-});
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
 
-canvas.addEventListener("mousedown", () => { mouse.clicked = true; });
-canvas.addEventListener("mouseup", () => { mouse.clicked = false; });
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
 
-function spawnTarget() {
-    const edge = Math.random() > 0.5 ? "left" : "right";
-    const targetY = Math.random() * 200 + 100;
-    targets.push({
+    canvas.addEventListener("mousedown", () => {
+      mouse.clicked = true;
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      mouse.clicked = false;
+    });
+
+    function spawnTarget() {
+      const edge = Math.random() > 0.5 ? "left" : "right";
+      const targetY = Math.random() * 200 + 100;
+      targets.push({
         x: edge === "left" ? -30 : 830,
         y: targetY,
         radius: 18,
@@ -127,152 +133,145 @@ function spawnTarget() {
         maxHp: 100,
         vx: edge === "left" ? (Math.random() * 1.5 + 1) : -(Math.random() * 1.5 + 1),
         worth: 25
-    });
-}
+      });
+    }
 
-function handleCollisions() {
-    player.grounded = false;
-    for (let plat of platforms) {
+    function handleCollisions() {
+      player.grounded = false;
+      for (let plat of platforms) {
         if (player.x < plat.x + plat.width &&
             player.x + player.width > plat.x &&
             player.y < plat.y + plat.height &&
             player.y + player.height > plat.y) {
-            
-            let overlapX = Math.min(player.x + player.width - plat.x, plat.x + plat.width - player.x);
-            let overlapY = Math.min(player.y + player.height - plat.y, plat.y + plat.height - player.y);
-
-            if (overlapX > overlapY) {
-                if (player.vy > 0 && player.y + player.height - player.vy <= plat.y + 1) {
-                    player.y -= overlapY;
-                    player.vy = 0;
-                    player.grounded = true;
-                } else if (player.vy < 0) {
-                    player.y += overlapY;
-                    player.vy = 0;
-                }
-            } else {
-                if (player.vx > 0) player.x -= overlapX;
-                else if (player.vx < 0) player.x += overlapX;
+          let overlapX = Math.min(player.x + player.width - plat.x, plat.x + plat.width - player.x);
+          let overlapY = Math.min(player.y + player.height - plat.y, plat.y + plat.height - player.y);
+          if (overlapX > overlapY) {
+            if (player.vy > 0 && player.y + player.height - player.vy <= plat.y + 1) {
+              player.y -= overlapY;
+              player.vy = 0;
+              player.grounded = true;
+            } else if (player.vy < 0) {
+              player.y += overlapY;
+              player.vy = 0;
             }
+          } else {
+            if (player.vx > 0) player.x -= overlapX;
+            else if (player.vx < 0) player.x += overlapX;
+          }
         }
+      }
     }
-}
 
-function updateGame() {
-    if (fireCooldown > 0) fireCooldown--;
+    function updateGame() {
+      if (fireCooldown > 0) fireCooldown--;
 
-    // Movement engine
-    player.vx = 0;
-    if (keys['a'] || keys['arrowleft']) player.vx = -player.speed;
-    if (keys['d'] || keys['arrowright']) player.vx = player.speed;
-    if ((keys['w'] || keys[' '] || keys['arrowup']) && player.grounded) {
+      // Movement engine
+      player.vx = 0;
+      if (keys['a'] || keys['arrowleft']) player.vx = -player.speed;
+      if (keys['d'] || keys['arrowright']) player.vx = player.speed;
+      if ((keys['w'] || keys[' '] || keys['arrowup']) && player.grounded) {
         player.vy = -player.jumpForce;
         player.grounded = false;
-    }
+      }
 
-    player.vy += GRAVITY;
-    player.x += player.vx;
-    player.y += player.vy;
+      player.vy += GRAVITY;
+      player.x += player.vx;
+      player.y += player.vy;
 
-    // Boundaries check
-    if (player.x < 0) player.x = 0;
-    if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      // Boundaries check
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-    handleCollisions();
+      handleCollisions();
 
-    // Fire weapon handling
-    if (mouse.clicked && fireCooldown === 0) {
+      // Fire weapon handling
+      if (mouse.clicked && fireCooldown === 0) {
         const wnd = WEAPONS[currentWeapon];
         const pCenterX = player.x + player.width / 2;
         const pCenterY = player.y + player.height / 2;
         const angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
-        
         bullets.push({
-            x: pCenterX + Math.cos(angle) * wnd.barrelLen,
-            y: pCenterY + Math.sin(angle) * wnd.barrelLen,
-            vx: Math.cos(angle) * wnd.bulletSpeed,
-            vy: Math.sin(angle) * wnd.bulletSpeed,
-            damage: wnd.damage,
-            color: wnd.bulletColor
+          x: pCenterX + Math.cos(angle) * wnd.barrelLen,
+          y: pCenterY + Math.sin(angle) * wnd.barrelLen,
+          vx: Math.cos(angle) * wnd.bulletSpeed,
+          vy: Math.sin(angle) * wnd.bulletSpeed,
+          damage: wnd.damage,
+          color: wnd.bulletColor
         });
         fireCooldown = wnd.fireInterval;
-    }
+      }
 
-    // Process Bullets
-    for (let i = bullets.length - 1; i >= 0; i--) {
+      // Process Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
         b.x += b.vx;
         b.y += b.vy;
         if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-            bullets.splice(i, 1);
+          bullets.splice(i, 1);
         }
-    }
+      }
 
-    // Process Targets
-    if (Math.random() < 0.015 && targets.length < 5) spawnTarget();
-
-    for (let i = targets.length - 1; i >= 0; i--) {
+      // Process Targets
+      if (Math.random() < 0.015 && targets.length < 5) spawnTarget();
+      for (let i = targets.length - 1; i >= 0; i--) {
         let t = targets[i];
         t.x += t.vx;
 
         // Collision logic with projectiles
         for (let j = bullets.length - 1; j >= 0; j--) {
-            let b = bullets[j];
-            let dist = Math.hypot(b.x - t.x, b.y - t.y);
-            if (dist < t.radius) {
-                t.hp -= b.damage;
-                bullets.splice(j, 1);
-                if (t.hp <= 0) break;
-            }
+          let b = bullets[j];
+          let dist = Math.hypot(b.x - t.x, b.y - t.y);
+          if (dist < t.radius) {
+            t.hp -= b.damage;
+            bullets.splice(j, 1);
+            if (t.hp <= 0) break;
+          }
         }
 
         if (t.hp <= 0) {
-            score += 10;
-            coins += t.worth;
-            targets.splice(i, 1);
+          score += 10;
+          coins += t.worth;
+          targets.splice(i, 1);
         } else if (t.x < -50 || t.x > 850) {
-            targets.splice(i, 1);
+          targets.splice(i, 1);
         }
+      }
     }
-}
 
-function drawMenu() {
-    ctx.fillStyle = "rgba(20, 20, 20, 0.8)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 36px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Glock 19 Weapon Sandbox Platformer", canvas.width / 2, 180);
-    
-    ctx.font = "20px sans-serif";
-    ctx.fillStyle = "#aaa";
-    ctx.fillText("Click Anywhere to Enter Arena", canvas.width / 2, 260);
+    function drawMenu() {
+      ctx.fillStyle = "rgba(20, 20, 20, 0.8)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 36px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Glock 19 Weapon Sandbox Platformer", canvas.width / 2, 180);
+      ctx.font = "20px sans-serif";
+      ctx.fillStyle = "#aaa";
+      ctx.fillText("Click Anywhere to Enter Arena", canvas.width / 2, 260);
 
-    if (mouse.clicked) {
+      if (mouse.clicked) {
         gameState = "PLAYING";
         mouse.clicked = false;
+      }
     }
-}
 
-function drawShop() {
-    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function drawShop() {
+      ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffcc00";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("BLACK MARKET WEAPONS SHOP", canvas.width / 2, 60);
 
-    ctx.fillStyle = "#ffcc00";
-    ctx.font = "bold 28px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("BLACK MARKET WEAPONS SHOP", canvas.width / 2, 60);
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px sans-serif";
+      ctx.fillText(`Your Funds: $${coins}`, canvas.width / 2, 110);
+      ctx.fillText("Press 'B' or click an inventory card to exit shop", canvas.width / 2, 140);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "18px sans-serif";
-    ctx.fillText(`Your Funds: $${coins}`, canvas.width / 2, 110);
-    ctx.fillText("Press 'B' or click an inventory card to exit shop", canvas.width / 2, 140);
-
-    shopItems.forEach(item => {
+      shopItems.forEach(item => {
         const wData = WEAPONS[item.id];
         const isHovered = mouse.x > item.x && mouse.x < item.x + item.w && mouse.y > item.y && mouse.y < item.y + item.h;
-        
+
         ctx.fillStyle = wData.purchased ? (currentWeapon === item.id ? "#224422" : "#333") : (isHovered ? "#443333" : "#2a2a2a");
         ctx.strokeStyle = currentWeapon === item.id ? "#00ff00" : "#555";
         ctx.lineWidth = 3;
@@ -288,27 +287,26 @@ function drawShop() {
         ctx.fillText(`Damage: ${wData.damage}`, item.x + item.w / 2, item.y + 55);
 
         if (wData.purchased) {
-            ctx.fillStyle = "#00ff00";
-            ctx.fillText(currentWeapon === item.id ? "EQUIPPED" : "OWNED - CLICK TO EQUIP", item.x + item.w / 2, item.y + 90);
+          ctx.fillStyle = "#00ff00";
+          ctx.fillText(currentWeapon === item.id ? "EQUIPPED" : "OWNED - CLICK TO EQUIP", item.x + item.w / 2, item.y + 90);
         } else {
-            ctx.fillStyle = coins >= wData.cost ? "#ffcc00" : "#ff3333";
-            ctx.fillText(`BUY: $${wData.cost}`, item.x + item.w / 2, item.y + 90);
+          ctx.fillStyle = coins >= wData.cost ? "#ffcc00" : "#ff3333";
+          ctx.fillText(`BUY: $${wData.cost}`, item.x + item.w / 2, item.y + 90);
         }
 
         if (isHovered && mouse.clicked) {
-            mouse.clicked = false; 
-            if (!wData.purchased && coins >= wData.cost) {
-                coins -= wData.cost;
-                wData.purchased = true;
-                currentWeapon = item.id;
-            } else if (wData.purchased) {
-                currentWeapon = item.id;
-            }
-        }
-    });
-}
-
+          mouse.clicked = false;
+          if (!wData.purchased && coins >= wData.cost) {
+            coins -= wData.cost;
+            wData.purchased = true;
+            currentWeapon = item.id;
 Use code with caution.
+} else if (wData.purchased) {
+currentWeapon = item.id;
+}
+}
+});
+}
 function drawGame() {
 // Background layer
 ctx.fillStyle = "#222";
