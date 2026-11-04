@@ -42,291 +42,288 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Game States: "MENU", "SHOP", "PLAYING", "GAMEOVER"
+// Game States: "MENU", "SHOP", "PLAYING"
 let gameState = "MENU";
 
 // Global Ecosystem Metrics
 const GRAVITY = 0.5;
 let score = 0;
 let coins = 100; // Starting wallet balance
-let gameOver = false;
 
 // Input management
 const keys = {};
 let mouse = { x: 0, y: 0 };
 
-// Weapon Inventory Registry (Assuming 60 FPS update loop: 1 frame ≈ 0.0167 seconds)
+// Weapon Inventory Registry 
 const WEAPONS = {
-    glock: { name: "Glock 19", damage: 25, cooldown: 0.05, fireInterval: 3, bulletSpeed: 20, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
-    revolver: { name: "Revolver", damage: 52, cooldown: 0.20, fireInterval: 12, bulletSpeed: 16, cost: 200, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
-    deagle: { name: "Desert Eagle", damage: 75, cooldown: 0.50, fireInterval: 30, bulletSpeed: 24, cost: 500, purchased: false, color: "#ddd", bulletColor: "#ff4500", barrelLen: 22, bWidth: 10 }
+    glock: { name: "Glock 19", damage: 25, fireInterval: 10, bulletSpeed: 20, cost: 0, purchased: true, color: "#333", bulletColor: "#ffcc00", barrelLen: 14, bWidth: 6 },
+    revolver: { name: "Revolver", damage: 52, fireInterval: 25, bulletSpeed: 16, cost: 200, purchased: false, color: "#888", bulletColor: "#ffaa00", barrelLen: 18, bWidth: 8 },
+    deagle: { name: "Desert Eagle", damage: 75, fireInterval: 40, bulletSpeed: 24, cost: 500, purchased: false, color: "#aaa", bulletColor: "#ff3300", barrelLen: 22, bWidth: 10 }
 };
-let currentWeapon = WEAPONS.glock;
-let fireCooldownTimer = 0;
+let currentWeaponKey = "glock";
 
-// Player Settings
-const player = {
+// Player Profile Object
+let player = {
     x: 100,
     y: 300,
     width: 24,
-    height: 40,
+    height: 36,
     vx: 0,
     vy: 0,
-    speed: 4,
+    speed: 5,
     jumpForce: 11,
     grounded: false,
-    hp: 100
+    lastShotFrame: 0
 };
 
-// Projectiles & Entities array lists
-const bullets = [];
-const enemies = [];
-const ENEMY_MAX_HP = 100;
-const ENEMY_SPEED = 1.5;
-let spawnTimer = 0;
-const SPAWN_INTERVAL = 120;
+// Global Tracking Pools
+let platforms = [];
+let targets = [];
+let bullets = [];
+let particles = [];
+let frameCount = 0;
 
-// Rigid Level Layout Bounds
-const platforms = [
-    { x: 0, y: 460, width: 800, height: 40 },
-    { x: 150, y: 340, width: 160, height: 20 },
-    { x: 480, y: 340, width: 160, height: 20 },
-    { x: 300, y: 220, width: 200, height: 20 }
+// Shop Interactive Click Grid Positions
+const shopItems = [
+    { key: "glock", x: 150, y: 220, w: 140, h: 120 },
+    { key: "revolver", x: 330, y: 220, w: 140, h: 120 },
+    { key: "deagle", x: 510, y: 220, w: 140, h: 120 }
 ];
 
-// UI Interface Button Bounds
-const menuButtons = {
-    play: { x: 300, y: 200, width: 200, height: 50, label: "PLAY NOW" },
-    shop: { x: 300, y: 280, width: 200, height: 50, label: "WEAPON SHOP" }
-};
+// Initialize Game Session Setup
+function initGame() {
+    score = 0;
+    player.x = 100;
+    player.y = 300;
+    player.vx = 0;
+    player.vy = 0;
+    bullets = [];
+    particles = [];
+    
+    // Level Map Terrain Design layout
+    platforms = [
+        { x: 0, y: 460, w: 800, h: 40 },
+        { x: 150, y: 350, w: 180, h: 15 },
+        { x: 450, y: 350, w: 180, h: 15 },
+        { x: 300, y: 240, w: 200, h: 15 },
+        { x: 80, y: 150, w: 140, h: 15 },
+        { x: 580, y: 150, w: 140, h: 15 }
+    ];
+    
+    targets = [];
+    for (let i = 0; i < 4; i++) {
+        spawnTarget();
+    }
+}
 
-const shopButtons = {
-    buyGlock: { x: 80, y: 220, width: 180, height: 60, item: "glock" },
-    buyRevolver: { x: 310, y: 220, width: 180, height: 60, item: "revolver" },
-    buyDeagle: { x: 540, y: 220, width: 180, height: 60, item: "deagle" },
-    back: { x: 300, y: 400, width: 200, height: 45, label: "MAIN MENU" }
-};
+function spawnTarget() {
+    let sideChoice = Math.random() > 0.5;
+    targets.push({
+        x: sideChoice ? Math.random() * 200 + 50 : Math.random() * 200 + 550,
+        y: Math.random() * 250 + 50,
+        r: 16,
+        hp: 100,
+        maxHp: 100,
+        vx: (Math.random() - 0.5) * 2.5,
+        vy: (Math.random() - 0.5) * 1.5
+    });
+}
 
-// Listeners
-window.addEventListener("keydown", (e) => {
-    keys[e.key] = true;
-    if ((e.key === "r" || e.key === "R") && gameState === "GAMEOVER") {
+function createSparks(x, y, color) {
+    for (let i = 0; i < 8; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            life: 20,
+            color: color
+        });
+    }
+}
+
+// Input Listener Hooks
+window.addEventListener("keydown", e => { 
+    keys[e.key.toLowerCase()] = true; 
+    if (e.key.toLowerCase() === 'r') {
         gameState = "MENU";
     }
 });
-window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 
-canvas.addEventListener("mousemove", (e) => {
+canvas.addEventListener("mousemove", e => {
     const rect = canvas.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
 });
 
-canvas.addEventListener("mousedown", (e) => {
-    if (e.button !== 0) return;
-
+canvas.addEventListener("mousedown", e => {
+    if (e.button !== 0) return; // Only track left click
+    
     if (gameState === "MENU") {
-        if (isMouseOver(mouse, menuButtons.play)) {
-            resetGame();
+        if (mouse.x > 250 && mouse.x < 550 && mouse.y > 220 && mouse.y < 280) {
+            initGame();
             gameState = "PLAYING";
-        } else if (isMouseOver(mouse, menuButtons.shop)) {
+        } else if (mouse.x > 250 && mouse.x < 550 && mouse.y > 310 && mouse.y < 370) {
             gameState = "SHOP";
         }
     } 
     else if (gameState === "SHOP") {
-        if (isMouseOver(mouse, shopButtons.back)) {
+        // Back Button Hit Detection Box
+        if (mouse.x > 30 && mouse.x < 130 && mouse.y > 30 && mouse.y < 70) {
             gameState = "MENU";
+            return;
         }
-        for (const key in shopButtons) {
-            if (key === "back") continue;
-            const btn = shopButtons[key];
-            if (isMouseOver(mouse, btn)) {
-                const wpn = WEAPONS[btn.item];
-                if (!wpn.purchased) {
-                    if (coins >= wpn.cost) {
-                        coins -= wpn.cost;
-                        wpn.purchased = true;
-                        currentWeapon = wpn;
-                    }
-                } else {
-                    currentWeapon = wpn;
+        // Shop Grid Selection Analysis Loop
+        shopItems.forEach(item => {
+            if (mouse.x > item.x && mouse.x < item.x + item.w && mouse.y > item.y && mouse.y < item.y + item.h) {
+                let wp = WEAPONS[item.key];
+                if (!wp.purchased && coins >= wp.cost) {
+                    coins -= wp.cost;
+                    wp.purchased = true;
+                    currentWeaponKey = item.key;
+                } else if (wp.purchased) {
+                    currentWeaponKey = item.key;
                 }
             }
-        }
+        });
+    } 
+    else if (gameState === "PLAYING") {
+        fireActiveWeapon();
     }
 });
 
-function isMouseOver(m, btn) {
-    return m.x > btn.x && m.x < btn.x + btn.width && m.y > btn.y && m.y < btn.y + btn.height;
-}
-
-function fireWeapon() {
-    const pCenterX = player.x + player.width / 2;
-    const pCenterY = player.y + player.height / 2;
-    const angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
+function fireActiveWeapon() {
+    let wp = WEAPONS[currentWeaponKey];
+    if (frameCount - player.lastShotFrame < wp.fireInterval) return;
+    
+    player.lastShotFrame = frameCount;
+    
+    let pCenterX = player.x + player.width / 2;
+    let pCenterY = player.y + player.height / 2;
+    let angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
     
     bullets.push({
-        x: pCenterX,
-        y: pCenterY,
-        vx: Math.cos(angle) * currentWeapon.bulletSpeed,
-        vy: Math.sin(angle) * currentWeapon.bulletSpeed,
-        width: currentWeapon.bWidth,
-        height: 4,
-        damage: currentWeapon.damage,
-        color: currentWeapon.bulletColor
-    });
-    
-    fireCooldownTimer = currentWeapon.fireInterval; 
-}
-
-function spawnEnemy() {
-    const side = Math.random() > 0.5;
-    const x = side ? canvas.width + 20 : -40;
-    enemies.push({
-        x: x,
-        y: 420,
-        width: 24,
-        height: 40,
-        hp: ENEMY_MAX_HP,
-        speed: ENEMY_SPEED + Math.random() * 0.4
+        x: pCenterX + Math.cos(angle) * wp.barrelLen,
+        y: pCenterY + Math.sin(angle) * wp.barrelLen,
+        vx: Math.cos(angle) * wp.bulletSpeed,
+        vy: Math.sin(angle) * wp.bulletSpeed,
+        damage: wp.damage,
+        color: wp.bulletColor,
+        size: wp.bWidth
     });
 }
 
-function checkCollision(a, b) {
-    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-}
-
-function resetGame() {
-    player.x = 100;
-    player.y = 300;
-    player.vx = 0;
-    player.vy = 0;
-    player.hp = 100;
-    player.grounded = false;
-    bullets.length = 0;
-    enemies.length = 0;
-    score = 0;
-    spawnTimer = 0;
-    fireCooldownTimer = 0;
-}
-
+// Logic Frame Processing Functions
 function update() {
+    frameCount++;
     if (gameState !== "PLAYING") return;
 
-    if (fireCooldownTimer > 0) fireCooldownTimer--;
+    // Horizonal Acceleration Processing
+    if (keys['a'] || keys['arrowleft']) player.vx = -player.speed;
+    else if (keys['d'] || keys['arrowright']) player.vx = player.speed;
+    else player.vx = 0;
 
-    // Auto-fire handling if left mouse is held down
-    if (keys["LeftClick"] || keys["mousedown"] || (navigator.maxTouchPoints === 0 && keys[0])) {}
-
-    // Check click direct tracking via dynamic update cycle loop
-    if (keys["ClickActive"] || fireCooldownTimer <= 0) {
-        // Handled via separate window handler below for continuous clicks
-    }
-
-    // Movement engine inputs
-    if (keys["a"] || keys["A"] || keys["ArrowLeft"]) {
-        player.vx = -player.speed;
-    } else if (keys["d"] || keys["D"] || keys["ArrowRight"]) {
-        player.vx = player.speed;
-    } else {
-        player.vx = 0;
-    }
-
-    if ((keys["w"] || keys["W"] || keys[" "] || keys["ArrowUp"]) && player.grounded) {
+    // Vertical Velocity Jump Calculations
+    if ((keys['w'] || keys[' '] || keys['arrowup']) && player.grounded) {
         player.vy = -player.jumpForce;
         player.grounded = false;
     }
 
+    // Apply Environmental Physics Constants
     player.vy += GRAVITY;
     player.x += player.vx;
     player.y += player.vy;
 
+    // Window Containment Traps
     if (player.x < 0) player.x = 0;
     if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-    // Platform resolving pass
+    // Platform Boundary Rigid Body Evaluations
     player.grounded = false;
-    for (const plat of platforms) {
-        if (checkCollision(player, plat)) {
-            const overlapX = Math.min(player.x + player.width - plat.x, plat.x + plat.width - player.x);
-            const overlapY = Math.min(player.y + player.height - plat.y, plat.y + plat.height - player.y);
-
-            if (overlapX > overlapY) {
-                if (player.vy > 0) {
-                    player.y -= overlapY;
-                    player.vy = 0;
-                    player.grounded = true;
-                } else if (player.vy < 0) {
-                    player.y += overlapY;
-                    player.vy = 0;
-                }
-            } else {
-                if (player.vx > 0) player.x -= overlapX;
-                else if (player.vx < 0) player.x += overlapX;
+    platforms.forEach(p => {
+        if (player.x + player.width > p.x && player.x < p.x + p.w) {
+            if (player.y + player.height >= p.y && player.y + player.height - player.vy <= p.y + 6) {
+                player.y = p.y - player.height;
+                player.vy = 0;
+                player.grounded = true;
             }
         }
-    }
+    });
 
-    // Bullets processing run
+    // Bullet Trajectory Calculation & Target Collision Loop
     for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
+        let b = bullets[i];
         b.x += b.vx;
         b.y += b.vy;
-
-        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-            bullets.splice(i, 1);
-            continue;
-        }
-
-        for (let j = enemies.length - 1; j >= 0; j--) {
-            const e = enemies[j];
-            if (checkCollision(b, e)) {
-                e.hp -= b.damage;
-                bullets.splice(i, 1);
+        
+        let outOfBounds = b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height;
+        let hitRegistered = false;
+        
+        for (let j = targets.length - 1; j >= 0; j--) {
+            let t = targets[j];
+            let dist = Math.hypot(b.x - t.x, b.y - t.y);
+            if (dist < t.r + b.size / 2) {
+                t.hp -= b.damage;
+                createSparks(b.x, b.y, b.color);
+                hitRegistered = true;
                 
-                if (e.hp <= 0) {
-                    enemies.splice(j, 1);
-                    score += 10;
+                if (t.hp <= 0) {
+                    createSparks(t.x, t.y, "#ff3333");
+                    coins += 25;
+                    score += 100;
+                    targets.splice(j, 1);
+                    spawnTarget();
                 }
                 break;
             }
         }
-    }
-
-    // NPC processing cycle
-    spawnTimer++;
-    if (spawnTimer >= SPAWN_INTERVAL) {
-        spawnEnemy();
-        spawnTimer = 0;
-    }
-
-    for (let j = enemies.length - 1; j >= 0; j--) {
-        const e = enemies[j];
-        if (e.x < player.x) e.x += e.speed;
-        else e.x -= e.speed;
-
-        if (checkCollision(player, e)) {
-            player.hp -= 0.6; 
-            if (player.hp <= 0) {
-                player.hp = 0;
-                const payout = Math.floor(score / 100);
-                coins += payout;
-                gameState = "GAMEOVER";
-            }
+        
+        if (outOfBounds || hitRegistered) {
+            bullets.splice(i, 1);
         }
+    }
+
+    // Floating Target Floating Drift Update
+    targets.forEach(t => {
+        t.x += t.vx;
+        t.y += t.vy;
+        if (t.x - t.r < 0 || t.x + t.r > canvas.width) t.vx *= -1;
+        if (t.y - t.r < 0 || t.y + t.r > 380) t.vy *= -1;
+    });
+
+    // Disperse Dynamic Particles Lifecycle Fade
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
     }
 }
 
-// Track mouse down state globally for automatic weapon fire support
-let isMouseDown = false;
-window.addEventListener("mousedown", (e) => {
-    if(e.button === 0) isMouseDown = true;
-});
-window.addEventListener("mouseup", (e) => {
-    if(e.button === 0) isMouseDown = false;
-});
+// Graphic Painting Pipeline System
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-function drawButton(btn, isHovered, fillColor = "#444") {
-    ctx.fillStyle = isHovered ? "#666" : fillColor;
-    ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
-    ctx.strokeStyle = "#fff";
+    if (gameState === "MENU") {
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 36px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("GLOCK & ARMORY PLATFORMER", 400, 140);
+        
+        // Start Canvas Control Block Area
+        ctx.fillStyle = "#28a745";
+        ctx.fillRect(250, 220, 300, 60);
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px sans-serif";
+        ctx.fillText("START CHALLENGE", 400, 255);
+        
+        // Shop Controller Selection Box Canvas Interface 
+        ctx.fillStyle = "#007bff";
+        ctx.fillRect(250, 310, 300, 60);
+        ctx.fillStyle = "#fff";
+        ctx.fillText("WEAPON STORE", 400, 345);
+
+        ctx.fillStyle = "#aaa";
+        ctx.font = "14px sans-serif";
