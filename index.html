@@ -73,7 +73,7 @@ const GLOCK_DAMAGE = 25;
 // NPC Settings
 const enemies = [];
 const ENEMY_MAX_HP = 100;
-const ENEMY_SPEED = 2;
+const ENEMY_SPEED = 1.5;
 let spawnTimer = 0;
 const SPAWN_INTERVAL = 120; // Frames between spawns (~2 seconds)
 
@@ -86,8 +86,8 @@ const platforms = [
 ];
 
 // Event Listeners
-window.addEventListener("keydown", (e) => keys[e.code] = true);
-window.addEventListener("keyup", (e) => keys[e.code] = false);
+window.addEventListener("keydown", (e) => { keys[e.code] = true; });
+window.addEventListener("keyup", (e) => { keys[e.code] = false; });
 
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -96,17 +96,14 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
-    if (gameOver) {
+    if (e.button === 0 && !gameOver) {
+        fireBullet();
+    } else if (gameOver) {
         resetGame();
-        return;
-    }
-    if (e.button === 0) { // Left Click
-        fireGlock();
     }
 });
 
-function fireGlock() {
-    // Fire toward mouse position relative to player center
+function fireBullet() {
     const pCenterX = player.x + player.width / 2;
     const pCenterY = player.y + player.height / 2;
     const angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
@@ -116,23 +113,27 @@ function fireGlock() {
         y: pCenterY,
         vx: Math.cos(angle) * BULLET_SPEED,
         vy: Math.sin(angle) * BULLET_SPEED,
-        radius: 3
+        radius: 4
     });
 }
 
 function spawnEnemy() {
-    // Alternates spawning on left or right edge of screen
-    const fromRight = Math.random() > 0.5;
+    const edge = Math.random() < 0.5 ? 0 : canvas.width - 24;
     enemies.push({
-        x: fromRight ? canvas.width + 20 : -40,
-        y: 0, // Falls onto the stage
+        x: edge,
+        y: 420, 
         width: 24,
         height: 40,
-        vx: 0,
-        vy: 0,
         hp: ENEMY_MAX_HP,
-        grounded: false
+        vx: edge === 0 ? ENEMY_SPEED : -ENEMY_SPEED
     });
+}
+
+function checkCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
 }
 
 function resetGame() {
@@ -141,117 +142,139 @@ function resetGame() {
     player.vx = 0;
     player.vy = 0;
     player.hp = 100;
-    enemies.length = 0;
     bullets.length = 0;
+    enemies.length = 0;
     score = 0;
+    spawnTimer = 0;
     gameOver = false;
 }
 
-// Simple AABB Collision Detection
-function checkCollision(rect1, rect2) {
-    return rect1.x < rect2.x + rect2.width &&
-           rect1.x + rect1.width > rect2.x &&
-           rect1.y < rect2.y + rect2.height &&
-           rect1.y + rect1.height > rect2.y;
-}
+function update() {
+    if (gameOver) return;
 
-// Handle physics and platform collisions
-function applyPhysics(entity) {
-    entity.vy += GRAVITY;
-    entity.x += entity.vx;
-    entity.y += entity.vy;
-    entity.grounded = false;
+    // Player Movement Horizontal
+    if (keys["KeyA"] || keys["ArrowLeft"]) {
+        player.vx = -player.speed;
+        player.facingRight = false;
+    } else if (keys["KeyD"] || keys["ArrowRight"]) {
+        player.vx = player.speed;
+        player.facingRight = true;
+    } else {
+        player.vx = 0;
+    }
 
+    // Player Movement Vertical (Jump)
+    if ((keys["KeyW"] || keys["Space"] || keys["ArrowUp"]) && player.grounded) {
+        player.vy = -player.jumpForce;
+        player.grounded = false;
+    }
+
+    // Apply Gravity
+    player.vy += GRAVITY;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    player.grounded = false;
+
+    // Platform Collisions
     for (let plat of platforms) {
-        // Resolve vertical collisions
-        if (entity.x + entity.width > plat.x && entity.x = plat.y && entity.y + entity.height - entity.vy  canvas.width) player.x = canvas.width - player.width;
+        if (player.x + player.width > plat.x && player.x < plat.x + plat.width) {
+            if (player.y + player.height >= plat.y && player.y + player.height - player.vy <= plat.y) {
+                player.y = plat.y - player.height;
+                player.vy = 0;
+                player.grounded = true;
+            }
+            else if (player.y <= plat.y + plat.height && player.y - player.vy >= plat.y + plat.height) {
+                player.y = plat.y + plat.height;
+                player.vy = 0;
+            }
+        }
+    }
 
-    // --- Spawning System ---
+    // Screen bounds checking
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+    // Enemy Processing
     spawnTimer++;
     if (spawnTimer >= SPAWN_INTERVAL) {
         spawnEnemy();
         spawnTimer = 0;
     }
 
-    // --- Process Bullets ---
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let enemy = enemies[i];
+
+        if (enemy.x < player.x) {
+            enemy.x += ENEMY_SPEED;
+        } else {
+            enemy.x -= ENEMY_SPEED;
+        }
+
+        if (checkCollision(player, enemy)) {
+            player.hp -= 0.5; 
+            if (player.hp <= 0) {
+                gameOver = true;
+            }
+        }
+    }
+
+    // Bullet Processing
     for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
         b.x += b.vx;
         b.y += b.vy;
 
-        // Remove offscreen bullets
         if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
             bullets.splice(i, 1);
             continue;
         }
 
-        // Bullet hitting enemies
-        for (let j = enemies.length - 1; j >= 0; j--) {
-            let e = enemies[j];
-            if (b.x > e.x && b.x < e.x + e.width && b.y > e.y && b.y < e.y + e.height) {
-                e.hp -= GLOCK_DAMAGE;
-                bullets.splice(i, 1); // Destroy bullet
+        let bulletRemoved = false;
+        const bRect = { x: b.x - b.radius, y: b.y - b.radius, width: b.radius * 2, height: b.radius * 2 };
 
-                if (e.hp <= 0) {
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            let enemy = enemies[j];
+            if (checkCollision(bRect, enemy)) {
+                enemy.hp -= GLOCK_DAMAGE;
+                bullets.splice(i, 1);
+                bulletRemoved = true;
+
+                if (enemy.hp <= 0) {
                     enemies.splice(j, 1);
                     score += 100;
                 }
                 break;
             }
         }
-    }
-
-    // --- Process AI Aggro/NPCs ---
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
-
-        // Core Requirement: Run to player coordinates
-        if (e.x < player.x) {
-            e.vx = ENEMY_SPEED;
-        } else if (e.x > player.x) {
-            e.vx = -ENEMY_SPEED;
-        } else {
-            e.vx = 0;
-        }
-
-        applyPhysics(e);
-
-        // Deal damage on touch
-        if (checkCollision(player, e)) {
-            player.hp -= 1; // Chip damage over time
-            if (player.hp <= 0) {
-                gameOver = true;
-            }
-        }
+        if (bulletRemoved) continue;
     }
 }
 
 function draw() {
-    // Clear screen
-    ctx.fillStyle = "#222";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Platforms
+    // Platforms
     ctx.fillStyle = "#555";
     for (let plat of platforms) {
         ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
     }
 
-    // Draw Player
+    // Player
     ctx.fillStyle = "#3498db";
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    // Draw Glock 19 pointing at mouse
+    // Glock Weapon Pointer
     ctx.save();
     ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-    let angle = Math.atan2(mouse.y - (player.y + player.height / 2), mouse.x - (player.x + player.width / 2));
+    const angle = Math.atan2(mouse.y - (player.y + player.height / 2), mouse.x - (player.x + player.width / 2));
     ctx.rotate(angle);
-    ctx.fillStyle = "#111"; // Gun body tint
-    ctx.fillRect(5, -3, 14, 6); // Barrel/Slide
-    ctx.fillRect(5, 0, 4, 10);  // Grip
+    ctx.fillStyle = "#333";
+    ctx.fillRect(5, -3, 12, 6); 
     ctx.restore();
 
-    // Draw Bullets
+    // Bullets
     ctx.fillStyle = "#f1c40f";
     for (let b of bullets) {
         ctx.beginPath();
@@ -259,45 +282,46 @@ function draw() {
         ctx.fill();
     }
 
-    // Draw Running NPCs & HP bars
-    for (let e of enemies) {
+    // Enemies
+    for (let enemy of enemies) {
         ctx.fillStyle = "#e74c3c";
-        ctx.fillRect(e.x, e.y, e.width, e.height);
+        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
 
-        // 100 HP dynamic bar tracker
-        ctx.fillStyle = "#000";
-        ctx.fillRect(e.x - 5, e.y - 10, e.width + 10, 5);
+        ctx.fillStyle = "#c0392b";
+        ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
         ctx.fillStyle = "#2ecc71";
-        ctx.fillRect(e.x - 5, e.y - 10, (e.width + 10) * (e.hp / ENEMY_MAX_HP), 5);
+        ctx.fillRect(enemy.x, enemy.y - 10, enemy.width * (enemy.hp / ENEMY_MAX_HP), 4);
     }
 
-    // UI Overlay
+    // HUD Text Status Updates
     ctx.fillStyle = "#fff";
-    ctx.font = "20px sans-serif";
-    ctx.fillText(`Score: ${score}`, 20, 35);
-    ctx.fillText(`Player HP: ${Math.max(0, Math.ceil(player.hp))}%`, 20, 65);
+    ctx.font = "18px sans-serif";
+    ctx.fillText(`Score: ${score}`, 20, 30);
+    ctx.fillText(`HP: ${Math.max(0, Math.floor(player.hp))}`, 20, 55);
 
+    // Game Over Overlay
     if (gameOver) {
-        ctx.fillStyle = "rgba(0,0,0,0.75)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         ctx.fillStyle = "#fff";
         ctx.font = "40px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
         ctx.font = "20px sans-serif";
-        ctx.fillText("Click anywhere to respawn", canvas.width / 2, canvas.height / 2 + 20);
-        ctx.textAlign = "left";
+        ctx.fillText("Click Anywhere to Restart", canvas.width / 2, canvas.height / 2 + 20);
+        ctx.textAlign = "left"; 
     }
 }
 
-function loop() {
+function gameLoop() {
     update();
     draw();
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameLoop);
 }
 
-// Kick off game loop
-loop();
+gameLoop();
 </script>
 </body>
 </html>
