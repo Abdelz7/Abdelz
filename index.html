@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -307,3 +308,89 @@ function drawShop() {
     });
 }
 
+Use code with caution.
+function drawGame() {
+// Background layer
+ctx.fillStyle = "#222";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Map platforms design
+ctx.fillStyle = "#444";
+platforms.forEach(plat => {
+ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+});
+// Draw Targets
+targets.forEach(t => {
+ctx.beginPath();
+ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+ctx.fillStyle = "#ff3333";
+ctx.fill();
+ctx.lineWidth = 2;
+ctx.strokeStyle = "#fff";
+ctx.stroke();
+// Inner bullseye rings
+ctx.beginPath();
+ctx.arc(t.x, t.y, t.radius * 0.5, 0, Math.PI * 2);
+ctx.fillStyle = "#fff";
+ctx.fill();
+// Healthbar interface
+let hbW = 30;
+let hbH = 4;
+ctx.fillStyle = "#000";
+ctx.fillRect(t.x - hbW / 2, t.y - t.radius - 10, hbW, hbH);
+ctx.fillStyle = "#00ff00";
+ctx.fillRect(t.x - hbW / 2, t.y - t.radius - 10, hbW * (t.hp / t.maxHp), hbH);
+});
+// Projectile tracking
+bullets.forEach(b => {
+ctx.beginPath();
+ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+ctx.fillStyle = b.color;
+ctx.fill();
+});
+// Player rendering engine
+ctx.fillStyle = "#007acc";
+ctx.fillRect(player.x, player.y, player.width, player.height);
+// Dynamic weapon pivoting logic
+const pCenterX = player.x + player.width / 2;
+const pCenterY = player.y + player.height / 2;
+const angle = Math.atan2(mouse.y - pCenterY, mouse.x - pCenterX);
+const activeWep = WEAPONS[currentWeapon];
+ctx.save();
+ctx.translate(pCenterX, pCenterY);
+ctx.rotate(angle);
+ctx.fillStyle = activeWep.color;
+ctx.fillRect(0, -activeWep.bWidth / 2, activeWep.barrelLen, activeWep.bWidth);
+ctx.restore();
+// Heads up display layout UI
+ctx.fillStyle = "#fff";
+ctx.font = "16px sans-serif";
+ctx.textAlign = "left";
+ctx.fillText(Score: ${score}, 20, 30);
+ctx.fillText(Wallet: $${coins}, 20, 55);
+ctx.fillText(Weapon: ${activeWep.name}, 20, 80);
+ctx.fillStyle = "#ffcc00";
+ctx.fillText("Press [B] for Weapon Shop", canvas.width - 220, 30);
+}
+function gameLoop() {
+if (gameState === "PLAYING") {
+updateGame();
+drawGame();
+} else if (gameState === "MENU") {
+drawMenu();
+} else if (gameState === "SHOP") {
+drawShop();
+}
+requestAnimationFrame(gameLoop);
+}
+// Kickoff
+gameLoop();
+
+
+
+<FollowUp>
+Now that the code displays cleanly, let me know if you want to optimize any mechanics:
+* Add **sound effect tracks** or firing visual flashes?
+* Include **moving platform obstacles**?
+* Tune the weapon values like **fire rates or player jump height**?
+</FollowUp>
+AI responses may include mistakes. Learn more
