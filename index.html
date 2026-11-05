@@ -3,34 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Unblocked Games</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Unblocked Games Dashboard</title>
+    <style>
+        /* Base reset and dark aesthetic matching unblocked hubs */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #1a1a1e;
+            color: #ffffff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation Layout */
+        .sidebar {
+            width: 260px;
+            background-color: #111114;
+            border-right: 2px solid #282830;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+        .site-title {
+            padding: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4ef081; /* Neon accent */
+            text-transform: uppercase;
+            border-bottom: 1px solid #282830;
+            letter-spacing: 1px;
+        }
+        .nav-section {
+            padding: 15px 20px 5px 20px;
+            font-size: 0.75rem;
+            color: #70707a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .game-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .game-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            color: #cccccc;
+            border-left: 3px solid transparent;
+        }
+        .game-item:hover {
+            background-color: #1e1e24;
+            color: #ffffff;
+            border-left-color: #4ef081;
+        }
+        .game-item.active {
+            background-color: #24242b;
+            color: #4ef081;
+            border-left-color: #4ef081;
+            font-weight: 600;
+        }
+
+        /* Main Game Arena Area */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #0c0c0e;
+            position: relative;
+        }
+
+        /* Top control bar */
+        .control-bar {
+            background-color: #111114;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #282830;
+        }
+        .current-game-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .fullscreen-btn {
+            background-color: #24242b;
+            color: #ffffff;
+            border: 1px solid #44444f;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .fullscreen-btn:hover {
+            background-color: #4ef081;
+            color: #111114;
+            border-color: #4ef081;
+        }
+
+        /* Responsive Container targeting the interactive Iframe */
+        .iframe-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
 </head>
 <body>
 
-    <header class="navbar">
-        <div class="logo">🎮 Unblocked Hub</div>
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search games...">
+    <!-- Sidebar layout for exploring alternatives and games -->
+    <div class="sidebar">
+        <div class="site-title">👾 Unblocked Hub</div>
+        
+        <div class="nav-section">Featured Games</div>
+        <ul class="game-list">
+            <!-- TO ADD MORE GAMES: Copy a row below, change the data-url to the game's link -->
+            <li class="game-item active" data-url="https://2minute-football.github.io/" data-title="2 Minute Football">🏈 2 Minute Football</li>
+            <li class="game-item" data-url="https://just-falllol.github.io/" data-title="Just Fall LOL">🐧 Just Fall LOL</li>
+            <li class="game-item" data-url="https://example.com" data-title="Sample Game 3">🎮 Sample Game 3</li>
+        </ul>
+    </div>
+
+    <!-- Main Section hosting the targeted full-screen game wrapper -->
+    <div class="main-content">
+        <div class="control-bar">
+            <span class="current-game-title" id="gameTitle">2 Minute Football</span>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 FULLSCREEN</button>
         </div>
-    </header>
-
-    <main class="container">
-        <section id="gameGrid" class="game-grid">
-            <!-- Games populate dynamically from script.js -->
-        </section>
-    </main>
-
-    <!-- Modal for playing games -->
-    <div id="gameModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeModal">&times;</span>
-            <div class="iframe-container">
-                <iframe id="gameIframe" src="" frameborder="0" allowfullscreen></iframe>
-            </div>
+        <div class="iframe-container" id="arena">
+            <!-- Initial game file loaded dynamically via JavaScript -->
+            <iframe id="gameFrame" src="https://2minute-football.github.io/" allowfullscreen></iframe>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Logic to switch between different embedded games smoothly
+        const gameItems = document.querySelectorAll('.game-item');
+        const gameFrame = document.getElementById('gameFrame');
+        const gameTitleDisplay = document.getElementById('gameTitle');
+
+        gameItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active styling from prior selections
+                gameItems.forEach(i => i.classList.remove('active'));
+                
+                // Set current item active
+                this.classList.add('active');
+                
+                // Extract game data details
+                const gameUrl = this.getAttribute('data-url');
+                const gameTitle = this.getAttribute('data-title');
+                
+                // Update Iframe anchor source and display panel
+                gameFrame.src = gameUrl;
+                gameTitleDisplay.textContent = gameTitle;
+            });
+        });
+
+        // Dynamic Fullscreen handler targeting the wrapper box
+        function toggleFullscreen() {
+            const targetContainer = document.getElementById('arena');
+            if (!document.fullscreenElement) {
+                targetContainer.requestFullscreen().catch(err => {
+                    alert(`Error enabling fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
 </body>
 </html>
