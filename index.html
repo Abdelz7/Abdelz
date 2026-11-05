@@ -3,190 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unblocked Games Dashboard</title>
+    <title>Unblocked Games Hub</title>
     <style>
-        /* Base reset and dark aesthetic matching unblocked hubs */
+        /* Modern dark theme dashboard palette styling */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         body {
-            background-color: #1a1a1e;
-            color: #ffffff;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar Navigation Layout */
-        .sidebar {
-            width: 260px;
-            background-color: #111114;
-            border-right: 2px solid #282830;
+            background-color: #0f0f12;
+            color: #f0f0f5;
             display: flex;
             flex-direction: column;
-            z-index: 10;
-        }
-        .site-title {
-            padding: 20px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #4ef081; /* Neon accent */
-            text-transform: uppercase;
-            border-bottom: 1px solid #282830;
-            letter-spacing: 1px;
-        }
-        .nav-section {
-            padding: 15px 20px 5px 20px;
-            font-size: 0.75rem;
-            color: #70707a;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .game-list {
-            list-style: none;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-        .game-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-            color: #cccccc;
-            border-left: 3px solid transparent;
-        }
-        .game-item:hover {
-            background-color: #1e1e24;
-            color: #ffffff;
-            border-left-color: #4ef081;
-        }
-        .game-item.active {
-            background-color: #24242b;
-            color: #4ef081;
-            border-left-color: #4ef081;
-            font-weight: 600;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Main Game Arena Area */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: #0c0c0e;
-            position: relative;
-        }
-
-        /* Top control bar */
-        .control-bar {
-            background-color: #111114;
-            padding: 10px 20px;
+        /* Top Header Navbar */
+        header {
+            background-color: #16161a;
+            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #282830;
+            border-bottom: 1px solid #232329;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .current-game-title {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-        .fullscreen-btn {
-            background-color: #24242b;
-            color: #ffffff;
-            border: 1px solid #44444f;
-            padding: 8px 16px;
-            border-radius: 4px;
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #38bdf8; /* Clean blue unblocked styling */
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85rem;
-            transition: background 0.2s;
         }
-        .fullscreen-btn:hover {
-            background-color: #4ef081;
-            color: #111114;
-            border-color: #4ef081;
+        .nav-links button {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 20px;
+            transition: color 0.2s;
+        }
+        .nav-links button:hover {
+            color: #38bdf8;
         }
 
-        /* Responsive Container targeting the interactive Iframe */
-        .iframe-container {
-            position: relative;
-            flex-grow: 1;
+        /* Main Container for the Game Discovery Grid */
+        main {
+            max-width: 1300px;
             width: 100%;
-            height: 100%;
-            background: #000;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex-grow: 1;
         }
-        iframe {
-            position: absolute;
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #ffffff;
+            border-left: 4px solid #38bdf8;
+            padding-left: 12px;
+        }
+
+        /* Responsive Dashboard Grid matching 2-minute football layouts */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        /* Interactive Game Selection Tiles */
+        .game-card {
+            background-color: #16161a;
+            border: 1px solid #232329;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1 / 1; /* Perfectly square cards */
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1);
+        }
+        .game-thumbnail {
+            flex-grow: 1;
+            background-color: #1e1e24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem; /* Emoji sizing */
+            position: relative;
+        }
+        /* Fallback background patterns when images aren't present */
+        .game-card:nth-child(odd) .game-thumbnail { background: linear-gradient(135deg, #1e1b4b, #311042); }
+        .game-card:nth-child(even) .game-thumbnail { background: linear-gradient(135deg, #062f4f, #0b1d33); }
+
+        .game-info {
+            padding: 12px;
+            background-color: #16161a;
+            text-align: center;
+        }
+        .game-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Fullscreen Theater/Player Interface Layer */
+        #player-view {
+            display: none; /* Hidden by default until card is clicked */
+            position: fixed;
             top: 0;
             left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        .player-bar {
+            background-color: #16161a;
+            padding: 10px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            border-bottom: 1px solid #232329;
+        }
+        .player-game-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .player-controls button {
+            background-color: #232329;
+            color: #ffffff;
+            border: 1px solid #3f3f46;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            transition: all 0.2s;
+        }
+        .player-controls button.close-btn {
+            background-color: #ef4444;
+            border-color: #ef4444;
+        }
+        .player-controls button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .iframe-wrapper {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 60px);
+        }
+        #game-frame {
             width: 100%;
             height: 100%;
             border: none;
+            background-color: #000;
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar layout for exploring alternatives and games -->
-    <div class="sidebar">
-        <div class="site-title">👾 Unblocked Hub</div>
-        
-        <div class="nav-section">Featured Games</div>
-        <ul class="game-list">
-            <!-- TO ADD MORE GAMES: Copy a row below, change the data-url to the game's link -->
-            <li class="game-item active" data-url="https://2minute-football.github.io/" data-title="2 Minute Football">🏈 2 Minute Football</li>
-            <li class="game-item" data-url="https://just-falllol.github.io/" data-title="Just Fall LOL">🐧 Just Fall LOL</li>
-            <li class="game-item" data-url="https://example.com" data-title="Sample Game 3">🎮 Sample Game 3</li>
-        </ul>
-    </div>
-
-    <!-- Main Section hosting the targeted full-screen game wrapper -->
-    <div class="main-content">
-        <div class="control-bar">
-            <span class="current-game-title" id="gameTitle">2 Minute Football</span>
-            <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 FULLSCREEN</button>
+    <!-- Sticky Nav Menu -->
+    <header>
+        <div class="logo" onclick="closeGame()">🎮 Unblocked Fullscreen</div>
+        <div class="nav-links">
+            <button onclick="closeGame()">Home</button>
+            <button onclick="alert('Add links or proxy options here!')">Proxy</button>
         </div>
-        <div class="iframe-container" id="arena">
-            <!-- Initial game file loaded dynamically via JavaScript -->
-            <iframe id="gameFrame" src="https://2minute-football.github.io/" allowfullscreen></iframe>
+    </header>
+
+    <!-- Main Grid Dashboard Content -->
+    <main id="dashboard-view">
+        <h2 class="section-title">Popular Games</h2>
+        <div class="games-grid">
+            
+            <!-- GAME TILE 1 -->
+            <div class="game-card" onclick="launchGame('https://2minute-football.github.io/', '2 Minute Football')">
+                <div class="game-thumbnail">🏈</div>
+                <div class="game-info"><div class="game-title">2 Minute Football</div></div>
+            </div>
+
+            <!-- GAME TILE 2 -->
+            <div class="game-card" onclick="launchGame('https://just-falllol.github.io/', 'Just Fall LOL')">
+                <div class="game-thumbnail">🐧</div>
+                <div class="game-info"><div class="game-title">Just Fall LOL</div></div>
+            </div>
+
+            <!-- GAME TILE 3 -->
+            <div class="game-card" onclick="launchGame('https://drive-mad.github.io/', 'Drive Mad')">
+                <div class="game-thumbnail">🛻</div>
+                <div class="game-info"><div class="game-title">Drive Mad</div></div>
+            </div>
+
+            <!-- GAME TILE 4 -->
+            <div class="game-card" onclick="launchGame('https://retro-bowl.github.io/', 'Retro Bowl')">
+                <div class="game-thumbnail">🏉</div>
+                <div class="game-info"><div class="game-title">Retro Bowl</div></div>
+            </div>
+
+            <!-- Add new game cards using the exact structure above -->
+
+        </div>
+    </main>
+
+    <!-- Fullscreen Theater Overlay Mode -->
+    <div id="player-view">
+        <div class="player-bar">
+            <span class="player-game-title" id="active-title">Game Title</span>
+            <div class="player-controls">
+                <button onclick="goFullscreen()">📺 Fullscreen Mode</button>
+                <button class="close-btn" onclick="closeGame()">❌ Close Game</button>
+            </div>
+        </div>
+        <div class="iframe-wrapper" id="video-arena">
+            <iframe id="game-frame" src="" allowfullscreen></iframe>
         </div>
     </div>
 
     <script>
-        // Logic to switch between different embedded games smoothly
-        const gameItems = document.querySelectorAll('.game-item');
-        const gameFrame = document.getElementById('gameFrame');
-        const gameTitleDisplay = document.getElementById('gameTitle');
+        const dashboard = document.getElementById('dashboard-view');
+        const playerView = document.getElementById('player-view');
+        const gameFrame = document.getElementById('game-frame');
+        const activeTitle = document.getElementById('active-title');
 
-        gameItems.forEach(item => {
-            item.addEventListener('click', function() {
-                // Remove active styling from prior selections
-                gameItems.forEach(i => i.classList.remove('active'));
-                
-                // Set current item active
-                this.classList.add('active');
-                
-                // Extract game data details
-                const gameUrl = this.getAttribute('data-url');
-                const gameTitle = this.getAttribute('data-title');
-                
-                // Update Iframe anchor source and display panel
-                gameFrame.src = gameUrl;
-                gameTitleDisplay.textContent = gameTitle;
-            });
-        });
+        // Launches game view overlay directly on the dashboard
+        function launchGame(url, title) {
+            activeTitle.textContent = title;
+            gameFrame.src = url;
+            
+            // Toggle screen display properties cleanly
+            dashboard.style.display = 'none';
+            playerView.style.display = 'flex';
+        }
 
-        // Dynamic Fullscreen handler targeting the wrapper box
-        function toggleFullscreen() {
-            const targetContainer = document.getElementById('arena');
-            if (!document.fullscreenElement) {
-                targetContainer.requestFullscreen().catch(err => {
-                    alert(`Error enabling fullscreen: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
+        // Exits player overlay, resets iframe content context safely
+        function closeGame() {
+            gameFrame.src = ""; // Stops game sounds & assets from processing in background
+            playerView.style.display = 'none';
+            dashboard.style.display = 'block';
+        }
+
+        // Forces browser-level structural fullscreen targeting the container element
+        function goFullscreen() {
+            const arena = document.getElementById('video-arena');
+            if (arena.requestFullscreen) {
+                arena.requestFullscreen();
+            } else if (arena.webkitRequestFullscreen) { /* Safari support */
+                arena.webkitRequestFullscreen();
             }
         }
     </script>
