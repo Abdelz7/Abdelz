@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unblocked Games Hub</title>
+    <title>Unblocked Games Hub Template</title>
     <style>
         /* Modern dark theme dashboard palette styling */
         * {
@@ -102,10 +102,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem; /* Emoji sizing */
+            font-size: 3rem; /* Emoji or placeholder icon sizing */
             position: relative;
         }
-        /* Fallback background patterns when images aren't present */
+        /* Alternating background visual placeholders when custom images aren't present */
         .game-card:nth-child(odd) .game-thumbnail { background: linear-gradient(135deg, #1e1b4b, #311042); }
         .game-card:nth-child(even) .game-thumbnail { background: linear-gradient(135deg, #062f4f, #0b1d33); }
 
@@ -148,6 +148,10 @@
             font-weight: 700;
             font-size: 1.1rem;
         }
+        .player-controls {
+            display: flex;
+            gap: 10px;
+        }
         .player-controls button {
             background-color: #232329;
             color: #ffffff;
@@ -157,7 +161,6 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 0.85rem;
-            margin-left: 10px;
             transition: all 0.2s;
         }
         .player-controls button.close-btn {
@@ -186,43 +189,24 @@
 
     <!-- Sticky Nav Menu -->
     <header>
-        <div class="logo" onclick="closeGame()">🎮 Unblocked Fullscreen</div>
+        <div class="logo" onclick="closeGame()">🎮 SITE LOGO</div>
         <div class="nav-links">
             <button onclick="closeGame()">Home</button>
-            <button onclick="alert('Add links or proxy options here!')">Proxy</button>
         </div>
     </header>
 
     <!-- Main Grid Dashboard Content -->
     <main id="dashboard-view">
-        <h2 class="section-title">Popular Games</h2>
+        <h2 class="section-title">All Games</h2>
         <div class="games-grid">
             
-            <!-- GAME TILE 1 -->
-            <div class="game-card" onclick="launchGame('https://2minute-football.github.io/', '2 Minute Football')">
-                <div class="game-thumbnail">🏈</div>
-                <div class="game-info"><div class="game-title">2 Minute Football</div></div>
+            <!-- 💡 HOW TO ADD A GAME: Copy the template block below and paste it directly underneath this line -->
+            <!-- 
+            <div class="game-card" onclick="launchGame('GAME_URL_HERE', 'GAME_NAME_HERE')">
+                <div class="game-thumbnail">🎮</div>
+                <div class="game-info"><div class="game-title">GAME_NAME_HERE</div></div>
             </div>
-
-            <!-- GAME TILE 2 -->
-            <div class="game-card" onclick="launchGame('https://just-falllol.github.io/', 'Just Fall LOL')">
-                <div class="game-thumbnail">🐧</div>
-                <div class="game-info"><div class="game-title">Just Fall LOL</div></div>
-            </div>
-
-            <!-- GAME TILE 3 -->
-            <div class="game-card" onclick="launchGame('https://drive-mad.github.io/', 'Drive Mad')">
-                <div class="game-thumbnail">🛻</div>
-                <div class="game-info"><div class="game-title">Drive Mad</div></div>
-            </div>
-
-            <!-- GAME TILE 4 -->
-            <div class="game-card" onclick="launchGame('https://retro-bowl.github.io/', 'Retro Bowl')">
-                <div class="game-thumbnail">🏉</div>
-                <div class="game-info"><div class="game-title">Retro Bowl</div></div>
-            </div>
-
-            <!-- Add new game cards using the exact structure above -->
+            -->
 
         </div>
     </main>
@@ -232,8 +216,8 @@
         <div class="player-bar">
             <span class="player-game-title" id="active-title">Game Title</span>
             <div class="player-controls">
-                <button onclick="goFullscreen()">📺 Fullscreen Mode</button>
-                <button class="close-btn" onclick="closeGame()">❌ Close Game</button>
+                <button onclick="goFullscreen()">📺 Fullscreen</button>
+                <button class="close-btn" onclick="closeGame()">❌ Close</button>
             </div>
         </div>
         <div class="iframe-wrapper" id="video-arena">
