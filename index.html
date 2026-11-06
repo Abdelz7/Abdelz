@@ -102,12 +102,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem; /* Emoji or placeholder icon sizing */
             position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-        /* Alternating background visual placeholders when custom images aren't present */
-        .game-card:nth-child(odd) .game-thumbnail { background: linear-gradient(135deg, #1e1b4b, #311042); }
-        .game-card:nth-child(even) .game-thumbnail { background: linear-gradient(135deg, #062f4f, #0b1d33); }
+        /* Custom image fit styling for the icon */
+        .game-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
         .game-info {
             padding: 12px;
@@ -200,13 +205,18 @@
         <h2 class="section-title">All Games</h2>
         <div class="games-grid">
             
-            <!-- Added Game Card -->
-            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g9/class-479', 'Getaway Shootout')">
-                <div class="game-thumbnail">🏈</div>
-                <div class="game-info"><div class="game-title">Getaway Shootout</div></div>
+            <!-- Getaway Shootout Game Card with Image Icon Integration -->
+            <div class="game-card" onclick="launchGame('https://github.io', 'Getaway Shootout')">
+                <div class="game-thumbnail">
+                    <!-- 💡 NOTE: Save your uploaded image in the same directory as this file and name it 'getaway.png' -->
+                    <img src="getaway.png" alt="Getaway Shootout Logo">
+                </div>
+                <div class="game-info">
+                    <div class="game-title">Getaway Shootout</div>
+                </div>
             </div>
 
-            <!-- 💡 HOW TO ADD A GAME: Copy the template block below and paste it directly underneath this line -->
+            <!-- 💡 HOW TO ADD AN ADDITIONAL GAME: Copy the template block below and paste it directly underneath this line -->
             <!-- 
             <div class="game-card" onclick="launchGame('GAME_URL_HERE', 'GAME_NAME_HERE')">
                 <div class="game-thumbnail">🎮</div>
@@ -227,7 +237,8 @@
             </div>
         </div>
         <div class="iframe-wrapper" id="video-arena">
-            <iframe id="game-frame" src="" allowfullscreen></iframe>
+            <!-- 💡 Updated with explicit fullscreen permissions directly on the iframe -->
+            <iframe id="game-frame" src="" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
         </div>
     </div>
 
@@ -254,17 +265,19 @@
             dashboard.style.display = 'block';
         }
 
-        // Forces browser-level structural fullscreen targeting the container element
+        // Forces the actual game iframe itself to become full-screen
         function goFullscreen() {
-            const playerElement = document.getElementById('player-view');
-            if (playerElement.requestFullscreen) {
-                playerElement.requestFullscreen();
-            } else if (playerElement.mozRequestFullScreen) { /* Firefox */
-                playerElement.mozRequestFullScreen();
-            } else if (playerElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                playerElement.webkitRequestFullscreen();
-            } else if (playerElement.msRequestFullscreen) { /* IE/Edge */
-                playerElement.msRequestFullscreen();
+            const frame = document.getElementById('game-frame');
+            if (!frame.src) return; // Prevent executing if no game is running
+
+            if (frame.requestFullscreen) {
+                frame.requestFullscreen();
+            } else if (frame.mozRequestFullScreen) { /* Firefox */
+                frame.mozRequestFullScreen();
+            } else if (frame.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                frame.webkitRequestFullscreen();
+            } else if (frame.msRequestFullscreen) { /* IE/Edge */
+                frame.msRequestFullscreen();
             }
         }
     </script>
