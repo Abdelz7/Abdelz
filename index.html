@@ -200,6 +200,12 @@
         <h2 class="section-title">All Games</h2>
         <div class="games-grid">
             
+            <!-- Added Game Card -->
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g9/class-479', 'Getaway Shootout')">
+                <div class="game-thumbnail">🏈</div>
+                <div class="game-info"><div class="game-title">Getaway Shootout</div></div>
+            </div>
+
             <!-- 💡 HOW TO ADD A GAME: Copy the template block below and paste it directly underneath this line -->
             <!-- 
             <div class="game-card" onclick="launchGame('GAME_URL_HERE', 'GAME_NAME_HERE')">
@@ -250,11 +256,15 @@
 
         // Forces browser-level structural fullscreen targeting the container element
         function goFullscreen() {
-            const arena = document.getElementById('video-arena');
-            if (arena.requestFullscreen) {
-                arena.requestFullscreen();
-            } else if (arena.webkitRequestFullscreen) { /* Safari support */
-                arena.webkitRequestFullscreen();
+            const playerElement = document.getElementById('player-view');
+            if (playerElement.requestFullscreen) {
+                playerElement.requestFullscreen();
+            } else if (playerElement.mozRequestFullScreen) { /* Firefox */
+                playerElement.mozRequestFullScreen();
+            } else if (playerElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                playerElement.webkitRequestFullscreen();
+            } else if (playerElement.msRequestFullscreen) { /* IE/Edge */
+                playerElement.msRequestFullscreen();
             }
         }
     </script>
