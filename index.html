@@ -6,42 +6,188 @@
     <title>Unblocked Games Hub Template</title>
     <style>
         /* Modern dark theme dashboard palette styling */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #0f0f12; color: #f0f0f5; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #0f0f12;
+            color: #f0f0f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
         /* Top Header Navbar */
-        header { background-color: #16161a; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #232329; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 1.4rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
-        .nav-links button { background: none; border: none; color: #94a3b8; font-size: 1rem; font-weight: 500; cursor: pointer; margin-left: 20px; transition: color 0.2s; }
-        .nav-links button:hover { color: #38bdf8; }
+        header {
+            background-color: #16161a;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #232329;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #38bdf8; /* Clean blue unblocked styling */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .nav-links button {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 20px;
+            transition: color 0.2s;
+        }
+        .nav-links button:hover {
+            color: #38bdf8;
+        }
 
         /* Main Container for the Game Discovery Grid */
-        main { max-width: 1300px; width: 100%; margin: 0 auto; padding: 40px 20px; flex-grow: 1; }
-        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 25px; color: #ffffff; border-left: 4px solid #38bdf8; padding-left: 12px; }
+        main {
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex-grow: 1;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #ffffff;
+            border-left: 4px solid #38bdf8;
+            padding-left: 12px;
+        }
 
-        /* Responsive Dashboard Grid */
-        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        /* Responsive Dashboard Grid matching 2-minute football layouts */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
 
         /* Interactive Game Selection Tiles */
-        .game-card { background-color: #16161a; border: 1px solid #232329; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; aspect-ratio: 1 / 1; }
-        .game-card:hover { transform: translateY(-5px); border-color: #38bdf8; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1); }
-        
-        .game-thumbnail { flex-grow: 1; background-color: #1e1e24; display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; overflow: hidden; }
-        .game-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .game-card {
+            background-color: #16161a;
+            border: 1px solid #232329;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1 / 1; /* Perfectly square cards */
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1);
+        }
+        .game-thumbnail {
+            flex-grow: 1;
+            background-color: #1e1e24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        /* Custom image fit styling for the icon */
+        .game-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-        .game-info { padding: 12px; background-color: #16161a; text-align: center; }
-        .game-title { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .game-info {
+            padding: 12px;
+            background-color: #16161a;
+            text-align: center;
+        }
+        .game-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* Fullscreen Theater/Player Interface Layer */
-        #player-view { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000000; z-index: 1000; flex-direction: column; }
-        .player-bar { background-color: #16161a; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; height: 60px; border-bottom: 1px solid #232329; }
-        .player-game-title { font-weight: 700; font-size: 1.1rem; }
-        .player-controls { display: flex; gap: 10px; }
-        .player-controls button { background-color: #232329; color: #ffffff; border: 1px solid #3f3f46; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s; }
-        .player-controls button.close-btn { background-color: #ef4444; border-color: #ef4444; }
-        .player-controls button:hover { opacity: 0.9; transform: scale(1.02); }
-        .iframe-wrapper { flex-grow: 1; position: relative; width: 100%; height: calc(100vh - 60px); }
-        #game-frame { width: 100%; height: 100%; border: none; background-color: #000; }
+        #player-view {
+            display: none; /* Hidden by default until card is clicked */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            z-index: 1000;
+            flex-direction: column;
+        }
+        .player-bar {
+            background-color: #16161a;
+            padding: 10px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            border-bottom: 1px solid #232329;
+        }
+        .player-game-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .player-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .player-controls button {
+            background-color: #232329;
+            color: #ffffff;
+            border: 1px solid #3f3f46;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .player-controls button.close-btn {
+            background-color: #ef4444;
+            border-color: #ef4444;
+        }
+        .player-controls button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .iframe-wrapper {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 60px);
+        }
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+        }
     </style>
 </head>
 <body>
@@ -58,114 +204,199 @@
     <main id="dashboard-view">
         <h2 class="section-title">All Games</h2>
         <div class="games-grid">
-
-            <!-- Tile 1 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'Getaway Shootout 9.6/10')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="Getaway Shootout"></div>
+            
+            <!-- Getaway Shootout Game Card with correct unblocked URL and local image link -->
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g9/class-479', 'Getaway Shootout 9.6/10')">
+                <div class="game-thumbnail">img src="https://splenedu52.github.io/img/class-479.png
+                    <!-- Keep 'getaway.png' in the same folder as your HTML file -->
+                    <"">
+                </div>
                 <div class="game-info">
                     <div class="game-title">Getaway Shootout</div>
                 </div>
             </div>
 
-            <!-- Tile 2 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'GUN MAYHEM 2')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="GUN MAYHEM 2"></div>
-                <div class="game-info">
-                    <div class="game-title">GUN MAYHEM 2</div>
-                </div>
-            </div>
+<!-- 💡 HOW TO ADD AN ADDITIONAL GAME: Copy the template block below and paste it directly underneath this line --> 
 
-            <!-- Tile 3 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'BIG SHOT Boxing')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="BIG SHOT Boxing"></div>
-                <div class="game-info">
-                    <div class="game-title">BIG SHOT Boxing</div>
-                </div>
-            </div>
+<div class="game-card" onclick="launchGame('https://splenedu52.github.io/g97/class-513', 'GUN MAYHEM 2')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-513.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">GUN MAYHEM 2</div>
+    </div> 
+</div> 
 
-            <!-- Tile 4 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'YoHoHo.io')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="YoHoHo.io"></div>
-                <div class="game-info">
-                    <div class="game-title">YoHoHo.io</div>
-                </div>
-            </div>
+<div class="game-card" onclick="launchGame('https://splenedu52.github.io/g16/class-529', 'BIG SHOT Boxing')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-529.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">BIG SHOT Boxing</div>
+    </div> 
+</div>
 
-            <!-- Tile 5 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'STICKMAN DEFENSE')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="STICKMAN DEFENSE"></div>
-                <div class="game-info">
-                    <div class="game-title">STICKMAN DEFENSE</div>
-                </div>
-            </div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g77/class-828', 'YoHoHo.io')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-828.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">YoHoHo.io</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g2/class-416', 'STICKMAN DEFENSE')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-416.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">STICKMAN DEFENSE</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g97/class-783', 'DIAMOND HEIST')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-783.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">HENRY STICKMAN DIAMOND HEIST</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g50/class-12', 'Ragdoll Hit')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-12.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">Ragdoll Hit</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g69/class-633', 'TAG')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-633.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">TAG</div>
+    </div> 
+</div>
 
-            <!-- Tile 6 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'DIAMOND HEIST')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="DIAMOND HEIST"></div>
-                <div class="game-info">
-                    <div class="game-title">HENRY STICKMAN DIAMOND HEIST</div>
-                </div>
-            </div>
+             <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g97/class-780', 'Prison Escape')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-780.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">Henry Stickman Prison</div>
+    </div> 
+</div>
 
-            <!-- Tile 7 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'Ragdoll Hit')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="Ragdoll Hit"></div>
-                <div class="game-info">
-                    <div class="game-title">Ragdoll Hit</div>
-                </div>
-            </div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g26/class-528', 'n-gon')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-528.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">n-gon</div>
+    </div> 
+</div>
 
-            <!-- Tile 8 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'TAG')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="TAG"></div>
-                <div class="game-info">
-                    <div class="game-title">TAG</div>
-                </div>
-            </div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g69/class-411', 'TEMPLE OF BOOM!')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-411.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">TEMPLE OF BOOM!</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g5/class-477', 'DUCK LIFE')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-477.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">DUCK LIFE</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g22/class-491', 'Red Ball 4')"> 
+    <div class="game-thumbnail"><img src="https://splenedu52.github.io/img/class-491.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">Red Ball 4</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g97/class-412', 'DreadHead')"> 
+    <div class="game-thumbnail"<img src="https://splenedu52.github.io/img/class-412.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">DreadHead</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g26/class-537', 'Snow Rider 3D')"> 
+    <div class="game-thumbnail"</div> 
+    <div class="game-info">
+        <div class="game-title">Snow Rider 3D</div>
+    </div> 
+</div>
+            <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g5/class-460', 'MOTO X3M')"> 
+    <div class="game-thumbnail"<img src="https://splenedu52.github.io/img/class-460.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">MOTO X3M</div>
+    </div> 
+</div>
+                <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g20/class-401', 'DRIVE MAD')"> 
+    <div class="game-thumbnail"<img src="https://splenedu52.github.io/img/class-401.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">DRIVE MAD</div>
+    </div> 
+</div>
+                <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g9/class-643', 'CATS')"> 
+    <div class="game-thumbnail"<img src="https://splenedu52.github.io/img/class-643.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">CATS</div>
+    </div> 
+</div>
+                <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g69/class-485', 'WE BECOME WHAT WE BEHOLD')"> 
+    <div class="game-thumbnail"<img src="https://splenedu52.github.io/img/class-485.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">WE BEHOLD</div>
+    </div> 
+</div>
+                <div class="game-card" onclick="launchGame('https://splenedu52.github.io/g5/class-448', 'Cookie CLicker')"> 
+    <div class="game-thumbnail"<img src="<img src="https://splenedu52.github.io/img/class-448.png"/></div> 
+    <div class="game-info">
+        <div class="game-title">Cookie Clicker</div>
+    </div> 
+</div>
 
-            <!-- Tile 9 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'Prison Escape')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="Prison Escape"></div>
-                <div class="game-info">
-                    <div class="game-title">Henry Stickman Prison</div>
-                </div>
-            </div>
 
-            <!-- Tile 10 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'n-gon')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="n-gon"></div>
-                <div class="game-info">
-                    <div class="game-title">n-gon</div>
-                </div>
-            </div>
 
-            <!-- Tile 11 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'TEMPLE OF BOOM!')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="TEMPLE OF BOOM!"></div>
-                <div class="game-info">
-                    <div class="game-title">TEMPLE OF BOOM!</div>
-                </div>
-            </div>
 
-            <!-- Tile 12 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'DUCK LIFE')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="DUCK LIFE"></div>
-                <div class="game-info">
-                    <div class="game-title">DUCK LIFE</div>
-                </div>
-            </div>
 
-            <!-- Tile 13 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'Red Ball 4')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="Red Ball 4"></div>
-                <div class="game-info">
-                    <div class="game-title">Red Ball 4</div>
-                </div>
-            </div>
+        </div>
+    </main>
 
-            <!-- Tile 14 -->
-            <div class="game-card" onclick="launchGame('https://github.io', 'DreadHead')">
-                <div class="game-thumbnail"><img src="https://github.io" alt="DreadHead"></div>
-                <div class="game-info">
-                    <div class="game-title">DreadHead</div>
-                </div>
+    <!-- Fullscreen Theater Overlay Mode -->
+    <div id="player-view">
+        <div class="player-bar">
+            <span class="player-game-title" id="active-title">Game Title</span>
+            <div class="player-controls">
+                <button onclick="goFullscreen()">📺 Fullscreen</button>
+                <button class="close-btn" onclick="closeGame()">❌ Close</button>
+            </div>
+        </div>
+        <div class="iframe-wrapper" id="video-arena">
+            <iframe id="game-frame" src="" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const dashboard = document.getElementById('dashboard-view');
+        const playerView = document.getElementById('player-view');
+        const gameFrame = document.getElementById('game-frame');
+        const activeTitle = document.getElementById('active-title');
+
+        // Launches game view overlay directly on the dashboard
+        function launchGame(url, title) {
+            activeTitle.textContent = title;
+            gameFrame.src = url;
+            
+            // Toggle screen display properties cleanly
+            dashboard.style.display = 'none';
+            playerView.style.display = 'flex';
+        }
+
+        // Exits player overlay, resets iframe content context safely
+        function closeGame() {
+            gameFrame.src = ""; // Stops game sounds & assets from processing in background
+            playerView.style.display = 'none';
+            dashboard.style.display = 'block';
+        }
+
+        // Forces the actual game iframe itself to become full-screen
+        function goFullscreen() {
+            const frame = document.getElementById('game-frame');
+            if (!frame.src) return; // Prevent executing if no game is running
+
+            if (frame.requestFullscreen) {
+                frame.requestFullscreen();
+            } else if (frame.mozRequestFullScreen) { /* Firefox */
+                frame.mozRequestFullScreen();
+            } else if (frame.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                frame.webkitRequestFullscreen();
+            } else if (frame.msRequestFullscreen) { /* IE/Edge */
+                frame.msRequestFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
