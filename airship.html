@@ -5,30 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>4 Henry Infiltrating the Airship</title>
   <style>
-    html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-    embed, ruffle-embed { width: 100%; height: 100%; display: block; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #container { position: fixed; inset: 0; }
+    #container ruffle-player { width: 100%; height: 100%; display: block; }
+    #status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; text-align: center; color: #fff; font: 16px sans-serif; z-index: 5; pointer-events: none; }
   </style>
 </head>
 <body>
+  <div id="container"></div>
+  <div id="status">Loading...</div>
+
   <script>
-    var sources = [
+    var PARTS = ["airship-part1.bin", "airship-part2.bin", "airship-part3.bin"];
+    var SOURCES = [
       "https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle",
+      "https://unpkg.com/@ruffle-rs/ruffle",
       "ruffle/ruffle.js"
     ];
-    function addEmbed() {
-      var e = document.createElement("embed");
-      e.src = "infiltratingtheairship.swf";
-      document.body.appendChild(e);
-    }
-    function load(i) {
-      if (i >= sources.length) { document.body.textContent = "Could not load Ruffle."; return; }
+
+    function setStatus(t) { document.getElementById("status").style.display = "flex"; document.getElementById("status").textContent = t; }
+    function hideStatus() { document.getElementById("status").style.display = "none"; }
+
+    function loadRuffle(i, done) {
+      if (i >= SOURCES.length) { done(false); return; }
       var s = document.createElement("script");
-      s.src = sources[i];
-      s.onload = addEmbed;
-      s.onerror = function () { load(i + 1); };
+      s.src = SOURCES[i];
+      s.onload = function () { window.RufflePlayer ? done(true) : loadRuffle(i + 1, done); };
+      s.onerror = function () { loadRuffle(i + 1, done); };
       document.head.appendChild(s);
     }
-    load(0);
+
+    function fetchPart(name) {
+      return fetch(name).then(function (r) {
+        if (!r.ok) throw new Error(name + " not found (HTTP " + r.status + "). Make sure it is uploaded next to airship.html.");
+        return r.arrayBuffer();
+      });
+    }
+
+    function loadGame() {
+      var done = 0;
+      setStatus("Downloading game... 0%");
+      return Promise.all(PARTS.map(function (p) {
+        return fetchPart(p).then(function (buf) {
+          done++;
+          setStatus("Downloading game... " + Math.round(done / PARTS.length * 100) + "%");
+          return buf;
+        });
+      })).then(function (bufs) {
+        var total = bufs.reduce(function (n, b) { return n + b.byteLength; }, 0);
+        var all = new Uint8Array(total), off = 0;
+        bufs.forEach(function (b) { all.set(new Uint8Array(b), off); off += b.byteLength; });
+        var sig = String.fromCharCode(all[0], all[1], all[2]);
+        if (!/^(FWS|CWS|ZWS)$/.test(sig)) throw new Error("The joined file is not a valid SWF (starts with '" + sig + "'). Re-upload the 3 part files.");
+        return all;
+      });
+    }
+
+    window.addEventListener("load", function () {
+      loadRuffle(0, function (ok) {
+        if (!ok) { setStatus("Could not load Ruffle. Check your connection or ad blocker."); return; }
+        loadGame().then(function (bytes) {
+          var player = window.RufflePlayer.newest().createPlayer();
+          document.getElementById("container").appendChild(player);
+          hideStatus();
+          return player.load({ data: bytes, swfFileName: "infiltratingtheairship.swf", autoplay: "on", unmuteOverlay: "visible" });
+        }).catch(function (e) { setStatus(e.message || String(e)); });
+      });
+    });
   </script>
 </body>
 </html>
