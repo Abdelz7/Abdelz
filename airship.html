@@ -2,22 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Henry Infiltrating the Airship</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 Henry Infiltrating the Airship</title>
   <style>
-    html, body, #container { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-    ruffle-player { width: 100%; height: 100%; display: block; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #container { position: fixed; inset: 0; }
+    #container ruffle-player { width: 100%; height: 100%; display: block; }
+    #status { position: fixed; top: 10px; left: 10px; right: 10px; color: #fff; font-family: sans-serif; z-index: 5; pointer-events: none; }
   </style>
 </head>
 <body>
   <div id="container"></div>
+  <div id="status">Loading Ruffle...</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"></script>
   <script>
-    window.addEventListener("load", () => {
-      const ruffle = window.RufflePlayer.newest();
-      const player = ruffle.createPlayer();
+    function showStatus(msg) {
+      var s = document.getElementById("status");
+      s.style.display = "block";
+      s.textContent = msg;
+    }
+    function hideStatus() {
+      document.getElementById("status").style.display = "none";
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"
+          onerror="showStatus('Could not load Ruffle from the CDN. Check your internet connection or ad blocker.')"></script>
+
+  <script>
+    var SWF = "infiltratingtheairship.swf";
+
+    window.addEventListener("load", function () {
+      if (location.protocol === "file:") {
+        showStatus("This page is opened as a local file. Run a local server instead (python -m http.server) and open http://localhost:8000");
+        return;
+      }
+      if (!window.RufflePlayer) {
+        showStatus("Ruffle did not load, so the game can't start.");
+        return;
+      }
+
+      var ruffle = window.RufflePlayer.newest();
+      var player = ruffle.createPlayer();
       document.getElementById("container").appendChild(player);
-      player.load("infiltratingtheairship.swf");
+
+      showStatus("Loading game...");
+      player.addEventListener("loadedmetadata", hideStatus);
+
+      player.load(SWF).then(hideStatus).catch(function (e) {
+        showStatus("Could not load " + SWF + ". Make sure it is in the same folder as this page, with the exact same filename.");
+        console.error(e);
+      });
+
+      setTimeout(function () {
+        if (document.getElementById("status").textContent === "Loading game...") hideStatus();
+      }, 8000);
     });
   </script>
 </body>
